@@ -14,28 +14,54 @@ import javax.servlet.http.*;
 @WebServlet ("/login")
 public class LoginServlet extends HttpServlet {
 
-    private ISecurityService SecurityService;
+
+    private IUserSecurityService securityService;
 
 
-    public LoginServlet()
-    {
-        super();
-    }
-    @Override
-    public void init(ServletConfig config) throws ServletException{
-        getServletContext context= config.getServletContext();
+    public LoginServlet () {
 
+        super ();
     }
 
+   @Override
+    public void init (ServletConfig config) throws ServletException {
+
+       SessionFactory manager = HibernateUtil.getSessionFactory();
+
+        try {
+
+            this.securityService = new UserSecurityServiceImpl(new UserDaoHibernate(manager));
+        } catch (Exception e) {
+
+            throw new ServletException(e);
+        }
+    }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        super.doPost(req, resp);
 
-        User user = new User();
-        user.setUserName(req.getParameter("User"));
-        user.setPassword(req.getParameter("Password"));
+        UserAnnotation user = new UserAnnotation();
+        user.setName (req.getParameter ("user"));
+        user.setPassword (req.getParameter ("password"));
+        try {
 
+            this.securityService.login (user);
+
+            HttpSession session = req.getSession ();
+            session.setAttribute ("user", user);
+
+            resp.sendRedirect ("home.jsp");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            resp.sendRedirect ("err.jsp");
+        }
+        finally {
+
+        }
+
+    }
+}
 
         try{
             this.SecurityService.login (user);
